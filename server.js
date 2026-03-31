@@ -66,6 +66,14 @@ async function fetchAllAirtableRecords() {
   });
 }
 
+app.get("/healthz", (req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "airtable-json-feed",
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get("/api/bookings", async (req, res) => {
   try {
     const bookings = await fetchAllAirtableRecords();
