@@ -14,7 +14,7 @@ const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE; // bookings table
 const PORT = process.env.PORT || 3000;
 
-const CALC_TABLE = "Calc2026";
+const CALC_TABLE = "tblOUD5hWhHfVJgRV";
 const LONG_HIRE_THRESHOLD_DAYS = 25;
 const LONG_HIRE_DISCOUNT_RATE = 0.05;
 const FULL_INSURANCE_PER_DAY = 30;
