@@ -18,6 +18,7 @@
       --blue: #1f3f8f;
       --khaki: #a1915f;
       --accent: #d8e8d1;
+      --highlight: #eef6e8;
     }
 
     * {
@@ -207,10 +208,6 @@
       font-size: 15px;
     }
 
-    .muted {
-      color: var(--text-soft);
-    }
-
     .top-summary {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -238,17 +235,92 @@
       font-weight: 700;
     }
 
-    .footnote {
-      margin-top: 14px;
+    .cta-wrap,
+    .request-wrap {
+      display: none;
+    }
+
+    .cta-wrap.show,
+    .request-wrap.show {
+      display: block;
+    }
+
+    .cta-wrap {
+      margin-top: 18px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .cta-wrap.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .cta-card {
+      background: var(--highlight);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .cta-text {
+      margin-top: 12px;
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: 700;
+      color: #2b4a2f;
+    }
+
+    .request-wrap {
+      margin-top: 18px;
+    }
+
+    .request-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+
+    .request-form .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .request-summary {
+      margin-bottom: 14px;
+      padding: 12px;
+      background: #fbfdfb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       color: var(--text-soft);
-      font-size: 13px;
       line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .request-status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .request-status.error {
+      color: #a52714;
+      font-weight: 700;
+    }
+
+    .request-status.success {
+      color: var(--green);
+      font-weight: 700;
     }
 
     @media (max-width: 800px) {
       form,
       .grid,
-      .top-summary {
+      .top-summary,
+      .request-form {
         grid-template-columns: 1fr;
       }
 
@@ -269,9 +341,9 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <h2>Get a Quote</h2>
+      <h2>Get Quote</h2>
       <div class="intro">
-        Select van type and travel dates to calculate a live quote.
+        Select your travel dates and vehicle to receive a tailored quote.
       </div>
     </div>
 
@@ -302,14 +374,6 @@
           <button id="clearBtn" type="button" class="secondary">Clear</button>
         </div>
       </form>
-<div style="
-  margin-top:12px;
-  font-size:14px;
-  color:#556255;
-  line-height:1.4;
-">
-  We often apply additional discounts if your booking fits well into our availability.
-</div>
 
       <div id="status" class="status"></div>
     </div>
@@ -390,20 +454,86 @@
         </div>
       </div>
 
-      <div class="footnote">
-        Standard insurance is included in the vehicle rate. Long hire discount is applied automatically for hires of 25 days or more. Full insurance is optional and calculated per day.
+      <div id="ctaWrap" class="cta-wrap">
+        <div class="cta-card">
+          <button id="customQuoteBtn" type="button">Custom Quote</button>
+          <div class="cta-text">
+            We often apply additional discounts if your booking fits well in our availability.
+          </div>
+        </div>
+      </div>
+
+      <div id="requestWrap" class="request-wrap">
+        <div class="card" style="margin-top:16px; margin-bottom:0; box-shadow:none; border:1px solid var(--border);">
+          <h2 style="font-size:22px; margin-bottom:12px;">Contact Us</h2>
+
+          <div id="requestSummary" class="request-summary"></div>
+
+          <form id="requestForm" class="request-form">
+            <div class="field">
+              <label for="pickup">Pick up location</label>
+              <select id="pickup" name="pickup" required>
+                <option value="">Select pick up location</option>
+                <option value="Auckland">Auckland</option>
+                <option value="Christchurch">Christchurch</option>
+                <option value="Queenstown">Queenstown</option>
+                <option value="Wellington">Wellington</option>
+                <option value="Nelson">Nelson</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="dropoff">Drop off location</label>
+              <select id="dropoff" name="dropoff" required>
+                <option value="">Select drop off location</option>
+                <option value="Auckland">Auckland</option>
+                <option value="Christchurch">Christchurch</option>
+                <option value="Queenstown">Queenstown</option>
+                <option value="Wellington">Wellington</option>
+                <option value="Nelson">Nelson</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="customerName">Name</label>
+              <input id="customerName" name="customerName" type="text" required />
+            </div>
+
+            <div class="field">
+              <label for="customerEmail">Email</label>
+              <input id="customerEmail" name="customerEmail" type="email" required />
+            </div>
+
+            <div class="actions full-width">
+              <button id="sendBtn" type="submit">Send</button>
+            </div>
+          </form>
+
+          <div id="requestStatus" class="request-status"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const API_URL = "/api/quote";
+    const QUOTE_API_URL = "/api/quote";
+    const REQUEST_API_URL = "/api/request";
 
     const form = document.getElementById("quoteForm");
     const quoteBtn = document.getElementById("quoteBtn");
     const clearBtn = document.getElementById("clearBtn");
     const results = document.getElementById("results");
     const status = document.getElementById("status");
+    const ctaWrap = document.getElementById("ctaWrap");
+    const customQuoteBtn = document.getElementById("customQuoteBtn");
+    const requestWrap = document.getElementById("requestWrap");
+    const requestForm = document.getElementById("requestForm");
+    const requestStatus = document.getElementById("requestStatus");
+    const requestSummary = document.getElementById("requestSummary");
+    const sendBtn = document.getElementById("sendBtn");
+
+    let ctaTimer = null;
+    let currentQuote = null;
 
     function money(value) {
       return new Intl.NumberFormat("en-NZ", {
@@ -412,9 +542,32 @@
       }).format(Number(value || 0));
     }
 
+    function formatDateDisplay(isoDate) {
+      if (!isoDate) return "";
+      const parts = String(isoDate).split("-");
+      if (parts.length !== 3) return isoDate;
+      return parts[2] + "/" + parts[1] + "/" + parts[0];
+    }
+
     function setStatus(message, kind) {
       status.textContent = message || "";
       status.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function setRequestStatus(message, kind) {
+      requestStatus.textContent = message || "";
+      requestStatus.className = "request-status" + (kind ? " " + kind : "");
+    }
+
+    function hideFollowup() {
+      if (ctaTimer) {
+        clearTimeout(ctaTimer);
+        ctaTimer = null;
+      }
+      ctaWrap.classList.remove("show");
+      requestWrap.classList.remove("show");
+      setRequestStatus("", "");
+      requestForm.reset();
     }
 
     function fillResult(data) {
@@ -422,7 +575,8 @@
         data.days >= 25 ? "Long hire discount applied" : "Standard rate";
 
       document.getElementById("sumVanType").textContent = data.vanType;
-      document.getElementById("sumDates").textContent = data.start + " → " + data.end;
+      document.getElementById("sumDates").textContent =
+        formatDateDisplay(data.start) + " → " + formatDateDisplay(data.end);
       document.getElementById("sumDays").textContent = data.days;
 
       document.getElementById("standardVehicle").textContent = money(data.vehiclePriceStandardIncluded);
@@ -437,6 +591,28 @@
       document.getElementById("fullDeposit").textContent = money(data.depositFull);
 
       results.classList.add("show");
+
+      hideFollowup();
+      ctaTimer = setTimeout(function () {
+        ctaWrap.classList.add("show");
+      }, 5000);
+    }
+
+    function fillRequestSummary(data) {
+      requestSummary.innerHTML =
+        "<strong>Selected trip:</strong> " +
+        data.vanType +
+        " | " +
+        formatDateDisplay(data.start) +
+        " → " +
+        formatDateDisplay(data.end) +
+        " | " +
+        data.days +
+        " days" +
+        "<br><strong>Quote totals:</strong> Standard " +
+        money(data.totalStandard) +
+        " / Full " +
+        money(data.totalFull);
     }
 
     form.addEventListener("submit", async function (event) {
@@ -458,10 +634,12 @@
 
       quoteBtn.disabled = true;
       results.classList.remove("show");
+      hideFollowup();
+      currentQuote = null;
       setStatus("Calculating quote…", "");
 
       try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(QUOTE_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -479,6 +657,7 @@
           throw new Error(data.details || data.error || "Quote calculation failed.");
         }
 
+        currentQuote = data;
         fillResult(data);
         setStatus("Quote ready.", "success");
       } catch (error) {
@@ -489,9 +668,76 @@
       }
     });
 
+    customQuoteBtn.addEventListener("click", function () {
+      if (!currentQuote) return;
+      fillRequestSummary(currentQuote);
+      requestWrap.classList.add("show");
+      requestWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    requestForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      if (!currentQuote) {
+        setRequestStatus("Please calculate a quote first.", "error");
+        return;
+      }
+
+      const payload = {
+        vanType: currentQuote.vanType,
+        start: currentQuote.start,
+        end: currentQuote.end,
+        days: currentQuote.days,
+        vehiclePriceStandardIncluded: currentQuote.vehiclePriceStandardIncluded,
+        longHireDiscount: currentQuote.longHireDiscount,
+        fullInsurance: currentQuote.fullInsurance,
+        totalStandard: currentQuote.totalStandard,
+        totalFull: currentQuote.totalFull,
+        depositStandard: currentQuote.depositStandard,
+        depositFull: currentQuote.depositFull,
+        pickup: document.getElementById("pickup").value,
+        dropoff: document.getElementById("dropoff").value,
+        customerName: document.getElementById("customerName").value.trim(),
+        customerEmail: document.getElementById("customerEmail").value.trim()
+      };
+
+      if (!payload.pickup || !payload.dropoff || !payload.customerName || !payload.customerEmail) {
+        setRequestStatus("Please complete all contact fields.", "error");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setRequestStatus("Sending request…", "");
+
+      try {
+        const response = await fetch(REQUEST_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.details || data.error || "Request could not be sent.");
+        }
+
+        setRequestStatus("Your request has been sent successfully.", "success");
+      } catch (error) {
+        console.error(error);
+        setRequestStatus(error.message || "Something went wrong while sending your request.", "error");
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
     clearBtn.addEventListener("click", function () {
       form.reset();
       results.classList.remove("show");
+      hideFollowup();
+      currentQuote = null;
       setStatus("", "");
     });
   </script>
