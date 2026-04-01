@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Get Quote</title>
+
+  <style>
+    :root {
+      --bg-page: #f3f8f1;
+      --bg-card: #ffffff;
+      --border: #cfddcc;
+      --text: #1f2a1f;
+      --text-soft: #556255;
+      --shadow: 0 2px 10px rgba(0,0,0,0.06);
+      --radius: 12px;
+      --green: #2e6b3b;
+      --blue: #1f3f8f;
+      --khaki: #a1915f;
+      --accent: #d8e8d1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      margin: 0 0 14px 0;
+      font-size: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .intro {
+      color: var(--text-soft);
+      line-height: 1.45;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: white;
+      min-height: 42px;
+    }
+
+    button {
+      border: 1px solid var(--green);
+      background: var(--green);
+      color: white;
+      border-radius: 10px;
+      padding: 11px 14px;
+      min-height: 42px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover {
+      filter: brightness(0.97);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .secondary {
+      background: #f7faf7;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .status.error {
+      color: #a52714;
+      font-weight: 700;
+    }
+
+    .status.success {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .results {
+      display: none;
+    }
+
+    .results.show {
+      display: block;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: var(--accent);
+      color: #243224;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .quote-box {
+      background: #fbfdfb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .quote-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .quote-box.standard h3 {
+      color: var(--green);
+    }
+
+    .quote-box.full h3 {
+      color: var(--blue);
+    }
+
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e6eee4;
+      font-size: 14px;
+    }
+
+    .line:last-child {
+      border-bottom: none;
+    }
+
+    .line strong {
+      font-size: 15px;
+    }
+
+    .muted {
+      color: var(--text-soft);
+    }
+
+    .top-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mini {
+      background: #fbfdfb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .mini .label {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mini .value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .footnote {
+      margin-top: 14px;
+      color: var(--text-soft);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 800px) {
+      form,
+      .grid,
+      .top-summary {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+
+      h2 {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>Get a Quote</h2>
+      <div class="intro">
+        Select van type and travel dates to calculate a live quote based on your Airtable pricing logic.
+      </div>
+    </div>
+
+    <div class="card">
+      <form id="quoteForm">
+        <div class="field">
+          <label for="vanType">Van Type</label>
+          <select id="vanType" name="vanType" required>
+            <option value="">Select van type</option>
+            <option value="Foxtrot">Foxtrot</option>
+            <option value="Jayco">Jayco</option>
+            <option value="Nomad">Nomad</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="start">Start date</label>
+          <input id="start" name="start" type="date" required />
+        </div>
+
+        <div class="field">
+          <label for="end">End date</label>
+          <input id="end" name="end" type="date" required />
+        </div>
+
+        <div class="actions" style="grid-column: 1 / -1;">
+          <button id="quoteBtn" type="submit">Get Quote</button>
+          <button id="clearBtn" type="button" class="secondary">Clear</button>
+        </div>
+      </form>
+
+      <div id="status" class="status"></div>
+    </div>
+
+    <div id="results" class="card results">
+      <div class="results-header">
+        <h2 style="margin:0; font-size:22px;">Quote Result</h2>
+        <div id="quoteBadge" class="badge"></div>
+      </div>
+
+      <div class="top-summary">
+        <div class="mini">
+          <div class="label">Van Type</div>
+          <div id="sumVanType" class="value"></div>
+        </div>
+        <div class="mini">
+          <div class="label">Travel Dates</div>
+          <div id="sumDates" class="value" style="font-size:16px;"></div>
+        </div>
+        <div class="mini">
+          <div class="label">Charged Days</div>
+          <div id="sumDays" class="value"></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="quote-box standard">
+          <h3>Standard Insurance</h3>
+
+          <div class="line">
+            <span>Vehicle price incl. standard insurance</span>
+            <span id="standardVehicle"></span>
+          </div>
+
+          <div class="line">
+            <span>Long hire discount</span>
+            <span id="standardDiscount"></span>
+          </div>
+
+          <div class="line">
+            <strong>Total</strong>
+            <strong id="standardTotal"></strong>
+          </div>
+
+          <div class="line">
+            <strong>Deposit required (15%)</strong>
+            <strong id="standardDeposit"></strong>
+          </div>
+        </div>
+
+        <div class="quote-box full">
+          <h3>Full Insurance</h3>
+
+          <div class="line">
+            <span>Vehicle price incl. standard insurance</span>
+            <span id="fullVehicle"></span>
+          </div>
+
+          <div class="line">
+            <span>Long hire discount</span>
+            <span id="fullDiscount"></span>
+          </div>
+
+          <div class="line">
+            <span>Full insurance option</span>
+            <span id="fullInsurance"></span>
+          </div>
+
+          <div class="line">
+            <strong>Total</strong>
+            <strong id="fullTotal"></strong>
+          </div>
+
+          <div class="line">
+            <strong>Deposit required (15%)</strong>
+            <strong id="fullDeposit"></strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="footnote">
+        Standard insurance is included in the vehicle rate. Long hire discount is applied automatically for hires of 25 days or more. Full insurance is optional and calculated per day.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "/api/quote";
+
+    const form = document.getElementById("quoteForm");
+    const quoteBtn = document.getElementById("quoteBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const results = document.getElementById("results");
+    const status = document.getElementById("status");
+
+    function money(value) {
+      return new Intl.NumberFormat("en-NZ", {
+        style: "currency",
+        currency: "NZD"
+      }).format(Number(value || 0));
+    }
+
+    function setStatus(message, kind) {
+      status.textContent = message || "";
+      status.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function fillResult(data) {
+      document.getElementById("quoteBadge").textContent =
+        data.days >= 25 ? "Long hire discount applied" : "Standard rate";
+
+      document.getElementById("sumVanType").textContent = data.vanType;
+      document.getElementById("sumDates").textContent = data.start + " → " + data.end;
+      document.getElementById("sumDays").textContent = data.days;
+
+      document.getElementById("standardVehicle").textContent = money(data.vehiclePriceStandardIncluded);
+      document.getElementById("standardDiscount").textContent = "-" + money(data.longHireDiscount);
+      document.getElementById("standardTotal").textContent = money(data.totalStandard);
+      document.getElementById("standardDeposit").textContent = money(data.depositStandard);
+
+      document.getElementById("fullVehicle").textContent = money(data.vehiclePriceStandardIncluded);
+      document.getElementById("fullDiscount").textContent = "-" + money(data.longHireDiscount);
+      document.getElementById("fullInsurance").textContent = money(data.fullInsurance);
+      document.getElementById("fullTotal").textContent = money(data.totalFull);
+      document.getElementById("fullDeposit").textContent = money(data.depositFull);
+
+      results.classList.add("show");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const vanType = document.getElementById("vanType").value;
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+
+      if (!vanType || !start || !end) {
+        setStatus("Please complete all fields.", "error");
+        return;
+      }
+
+      if (end < start) {
+        setStatus("End date must be on or after start date.", "error");
+        return;
+      }
+
+      quoteBtn.disabled = true;
+      results.classList.remove("show");
+      setStatus("Calculating quote…", "");
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            vanType,
+            start,
+            end
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.details || data.error || "Quote calculation failed.");
+        }
+
+        fillResult(data);
+        setStatus("Quote ready.", "success");
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || "Something went wrong while calculating the quote.", "error");
+      } finally {
+        quoteBtn.disabled = false;
+      }
+    });
+
+    clearBtn.addEventListener("click", function () {
+      form.reset();
+      results.classList.remove("show");
+      setStatus("", "");
+    });
+  </script>
+</body>
+</html>
