@@ -210,12 +210,20 @@ async function sendCustomerEmail(payload) {
     </div>
   `;
 
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: EMAIL_FROM,
     to: [payload.customerEmail],
     subject,
     html
   });
+
+  console.log("Customer email result:", JSON.stringify(result));
+
+  if (result.error) {
+    throw new Error(`Customer email failed: ${JSON.stringify(result.error)}`);
+  }
+
+  return result;
 }
 
 async function sendInternalEmail(payload) {
@@ -247,6 +255,113 @@ async function sendInternalEmail(payload) {
       </ul>
     </div>
   `;
+
+  const result = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: [EMAIL_TO_INTERNAL],
+    subject,
+    html
+  });
+
+  console.log("Internal email result:", JSON.stringify(result));
+
+  if (result.error) {
+    throw new Error(`Internal email failed: ${JSON.stringify(result.error)}`);
+  }
+
+  return result;
+}
+
+  return resend.emails.send({
+    from: EMAIL_FROM,
+    to: [payload.customerEmail],
+    subject,
+    html
+  });
+}
+
+async function sendCustomerEmail(payload) {
+  const subject = "Your Bayinvent Quote Request";
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2a1f; line-height: 1.5;">
+      <h2 style="margin-bottom: 12px;">Thank you for your request</h2>
+      <p>Hello ${payload.customerName},</p>
+      <p>Thanks for contacting Bayinvent. We have received your request and a personalized quote will follow shortly from <strong>The team @ Bayinvent</strong>.</p>
+
+      <h3 style="margin-top: 24px;">Your request details</h3>
+      <ul>
+        <li><strong>Van Type:</strong> ${payload.vanType}</li>
+        <li><strong>Travel Dates:</strong> ${formatDateDisplay(payload.start)} → ${formatDateDisplay(payload.end)}</li>
+        <li><strong>Pick up:</strong> ${payload.pickup}</li>
+        <li><strong>Drop off:</strong> ${payload.dropoff}</li>
+      </ul>
+
+      <p style="margin-top: 20px;">Kind regards,<br><strong>The team @ Bayinvent</strong></p>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: [payload.customerEmail],
+    subject,
+    html
+  });
+
+  console.log("Customer email result:", JSON.stringify(result));
+
+  if (result.error) {
+    throw new Error(`Customer email failed: ${JSON.stringify(result.error)}`);
+  }
+
+  return result;
+}
+
+async function sendInternalEmail(payload) {
+  const subject = "New Quote Request";
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2a1f; line-height: 1.5;">
+      <h2 style="margin-bottom: 12px;">New Quote Request</h2>
+
+      <ul>
+        <li><strong>Name:</strong> ${payload.customerName}</li>
+        <li><strong>Email:</strong> ${payload.customerEmail}</li>
+        <li><strong>Van Type:</strong> ${payload.vanType}</li>
+        <li><strong>Travel Dates:</strong> ${formatDateDisplay(payload.start)} → ${formatDateDisplay(payload.end)}</li>
+        <li><strong>Days:</strong> ${payload.days}</li>
+        <li><strong>Pick up:</strong> ${payload.pickup}</li>
+        <li><strong>Drop off:</strong> ${payload.dropoff}</li>
+      </ul>
+
+      <h3 style="margin-top: 24px;">Quote Snapshot</h3>
+      <ul>
+        <li><strong>Vehicle price incl. standard insurance:</strong> ${money(payload.vehiclePriceStandardIncluded)}</li>
+        <li><strong>Long hire discount:</strong> ${money(payload.longHireDiscount)}</li>
+        <li><strong>Full insurance option:</strong> ${money(payload.fullInsurance)}</li>
+        <li><strong>Total standard:</strong> ${money(payload.totalStandard)}</li>
+        <li><strong>Total full:</strong> ${money(payload.totalFull)}</li>
+        <li><strong>Deposit standard:</strong> ${money(payload.depositStandard)}</li>
+        <li><strong>Deposit full:</strong> ${money(payload.depositFull)}</li>
+      </ul>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: [EMAIL_TO_INTERNAL],
+    subject,
+    html
+  });
+
+  console.log("Internal email result:", JSON.stringify(result));
+
+  if (result.error) {
+    throw new Error(`Internal email failed: ${JSON.stringify(result.error)}`);
+  }
+
+  return result;
+}
 
   return resend.emails.send({
     from: EMAIL_FROM,
