@@ -92,7 +92,6 @@
       color: #243224;
     }
 
-    /* linke Van-Spalte / sticky resource area */
     .fc .fc-resourcecell-cushion {
       font-weight: 700;
       padding: 8px 10px;
@@ -106,7 +105,6 @@
       border-color: var(--border);
     }
 
-    /* freie Fläche */
     .fc .fc-timeline-lane-frame,
     .fc .fc-timeline-bg,
     .fc .fc-scrollgrid-section-body table,
@@ -114,7 +112,6 @@
       background-color: var(--bg-availability);
     }
 
-    /* Kopfbereich Monat/Tag */
     .fc .fc-timeline-header,
     .fc .fc-col-header-cell,
     .fc .fc-scrollgrid-section-header table,
@@ -134,13 +131,11 @@
       white-space: nowrap;
     }
 
-    /* linke Grid-Spalte */
     .fc .fc-datagrid-header,
     .fc .fc-datagrid-cell-frame {
       background-color: var(--bg-datagrid);
     }
 
-    /* Balken */
     .fc-event {
       border: none !important;
       border-radius: 8px !important;
@@ -170,7 +165,6 @@
       white-space: nowrap;
     }
 
-    /* Marker Pickup / Dropoff */
     .edge-marker {
       position: absolute;
       top: 50%;
@@ -193,7 +187,6 @@
       right: -8px;
     }
 
-    /* Tooltip */
     .tooltip {
       position: absolute;
       z-index: 9999;
@@ -210,7 +203,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    /* Mobile / kleine Screens */
     @media (max-width: 900px) {
       body {
         padding: 12px;
@@ -289,7 +281,7 @@
   <button id="applyFilterBtn" type="button">Show available vans</button>
   <button id="clearFilterBtn" type="button">Clear filter</button>
 
-  <span class="hint">Live JSON feed from local Airtable bridge.</span>
+  <span class="hint">Live JSON feed from Airtable bridge.</span>
 </div>
 
 <div id="calendar"></div>
@@ -304,10 +296,10 @@
   var allResources = [];
   var allEvents = [];
 
+  // WICHTIG: relative path für lokal + Render
   var BOOKINGS_JSON_URL = '/api/bookings';
 
   function addOneDayIso(dateStr) {
-    // ISO rein, ISO raus, ein Tag drauf
     var parts = String(dateStr).split('-');
     if (parts.length !== 3) return dateStr;
 
@@ -597,12 +589,16 @@
 
   async function loadBookingData() {
     try {
+      console.log('Fetching booking data from:', BOOKINGS_JSON_URL);
+
       var response = await fetch(BOOKINGS_JSON_URL, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('HTTP ' + response.status);
       }
 
       var data = await response.json();
+
+      console.log('Rows loaded:', data);
 
       if (!Array.isArray(data)) {
         throw new Error('JSON must be an array of booking rows.');
@@ -611,6 +607,9 @@
       allRows = data;
       allResources = buildResources(allRows);
       allEvents = buildEvents(allRows);
+
+      console.log('Resources:', allResources);
+      console.log('Events:', allEvents);
 
       if (!allResources.length || !allEvents.length) {
         console.error('No usable booking records found in JSON.');
