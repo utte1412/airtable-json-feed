@@ -21,32 +21,6 @@ const LONG_HIRE_DISCOUNT_RATE = 0.05;
 const FULL_INSURANCE_PER_DAY = 30;
 const DEPOSIT_RATE = 0.15;
 
-// Request storage
-// For now we store requests in Calc2026 as well, because those fields definitely exist.
-// If later you create a separate Requests table, only this constant and field map need changing.
-const REQUEST_TABLE = CALC_TABLE;
-
-// Confirmed Airtable fields in Calc2026
-const REQUEST_FIELDS = {
-  start: "Start",
-  end: "End",
-  pickup: "PickUp",
-  dropoff: "DropOff",
-  vanType: "Van Type",
-
-  customerName: "Name",
-  customerEmail: "Email",
-  
-  // OPTIONAL quote output fields if you later create them in Airtable
-  totalStandard: null,
-  totalFull: null,
-  depositStandard: null,
-  depositFull: null,
-  longHireDiscount: null,
-  fullInsurance: null,
-  vehiclePriceStandardIncluded: null
-};
-
 if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID || !AIRTABLE_TABLE) {
   console.error("Missing required environment variables.");
   console.error("Please set AIRTABLE_TOKEN, AIRTABLE_BASE_ID and AIRTABLE_TABLE in .env");
@@ -109,6 +83,22 @@ async function airtableFetch(url, options = {}) {
   return response.json();
 }
 
+async function airtableDelete(url) {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${AIRTABLE_TOKEN}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Airtable API error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
+
 async function fetchAllAirtableRecords(tableIdOrName, mapper) {
   let records = [];
   let offset = null;
@@ -134,30 +124,26 @@ async function fetchAllAirtableRecords(tableIdOrName, mapper) {
   });
 }
 
-async function createCalcRecord(start, end, vanType) {
+async function createCalcRecord(fields) {
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${CALC_TABLE}`;
 
-  const data = await airtableFetch(url, {
+  return airtableFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      fields: {
-        "Start": start,
-        "End": end,
-        "Van Type": vanType,
-        "Run": true
-      }
-    })
+    body: JSON.stringify({ fields })
   });
-
-  return data;
 }
 
 async function getCalcRecord(recordId) {
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${CALC_TABLE}/${recordId}`;
   return airtableFetch(url);
+}
+
+async function deleteCalcRecord(recordId) {
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${CALC_TABLE}/${recordId}`;
+  return airtableDelete(url);
 }
 
 async function waitForVanCost(recordId, maxAttempts = 12, delayMs = 1000) {
@@ -174,85 +160,6 @@ async function waitForVanCost(recordId, maxAttempts = 12, delayMs = 1000) {
   }
 
   throw new Error("Pricing timeout: Airtable did not return Van Cost in time.");
-}
-
-function buildRequestFields(payload) {
-  const fields = {};
-
-  if (REQUEST_FIELDS.start && payload.start) {
-    fields[REQUEST_FIELDS.start] = payload.start;
-  }
-
-  if (REQUEST_FIELDS.end && payload.end) {
-    fields[REQUEST_FIELDS.end] = payload.end;
-  }
-
-  if (REQUEST_FIELDS.pickup && payload.pickup) {
-    fields[REQUEST_FIELDS.pickup] = payload.pickup;
-  }
-
-  if (REQUEST_FIELDS.dropoff && payload.dropoff) {
-    fields[REQUEST_FIELDS.dropoff] = payload.dropoff;
-  }
-
-  if (REQUEST_FIELDS.vanType && payload.vanType) {
-    fields[REQUEST_FIELDS.vanType] = payload.vanType;
-  }
-
-  // Optional fields — only used if you later define them above
-  if (REQUEST_FIELDS.customerName && payload.customerName) {
-    fields[REQUEST_FIELDS.customerName] = payload.customerName;
-  }
-
-  if (REQUEST_FIELDS.customerEmail && payload.customerEmail) {
-    fields[REQUEST_FIELDS.customerEmail] = payload.customerEmail;
-  }
-
-  if (REQUEST_FIELDS.totalStandard && payload.totalStandard != null) {
-    fields[REQUEST_FIELDS.totalStandard] = payload.totalStandard;
-  }
-
-  if (REQUEST_FIELDS.totalFull && payload.totalFull != null) {
-    fields[REQUEST_FIELDS.totalFull] = payload.totalFull;
-  }
-
-  if (REQUEST_FIELDS.depositStandard && payload.depositStandard != null) {
-    fields[REQUEST_FIELDS.depositStandard] = payload.depositStandard;
-  }
-
-  if (REQUEST_FIELDS.depositFull && payload.depositFull != null) {
-    fields[REQUEST_FIELDS.depositFull] = payload.depositFull;
-  }
-
-  if (REQUEST_FIELDS.longHireDiscount && payload.longHireDiscount != null) {
-    fields[REQUEST_FIELDS.longHireDiscount] = payload.longHireDiscount;
-  }
-
-  if (REQUEST_FIELDS.fullInsurance && payload.fullInsurance != null) {
-    fields[REQUEST_FIELDS.fullInsurance] = payload.fullInsurance;
-  }
-
-  if (REQUEST_FIELDS.vehiclePriceStandardIncluded && payload.vehiclePriceStandardIncluded != null) {
-    fields[REQUEST_FIELDS.vehiclePriceStandardIncluded] = payload.vehiclePriceStandardIncluded;
-  }
-
-  return fields;
-}
-
-async function createRequestRecord(payload) {
-  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${REQUEST_TABLE}`;
-
-  const fields = buildRequestFields(payload);
-
-  const data = await airtableFetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ fields })
-  });
-
-  return data;
 }
 
 app.get("/healthz", (req, res) => {
@@ -283,6 +190,8 @@ app.get("/api/bookings", async (req, res) => {
 });
 
 app.post("/api/quote", async (req, res) => {
+  let tempRecordId = null;
+
   try {
     const { start, end, vanType } = req.body || {};
 
@@ -295,14 +204,21 @@ app.post("/api/quote", async (req, res) => {
 
     const days = inclusiveDays(start, end);
 
-    const created = await createCalcRecord(start, end, vanType);
-    const recordId = created.id;
+    // Temporary Calc2026 record for pricing only
+    const created = await createCalcRecord({
+      "Start": start,
+      "End": end,
+      "Van Type": vanType,
+      "Run": true
+    });
 
-    if (!recordId) {
-      throw new Error("Failed to create Calc record.");
+    tempRecordId = created.id;
+
+    if (!tempRecordId) {
+      throw new Error("Failed to create temporary Calc record.");
     }
 
-    const pricedRecord = await waitForVanCost(recordId);
+    const pricedRecord = await waitForVanCost(tempRecordId);
     const fields = pricedRecord.fields || {};
 
     const vanCost = toCurrencyNumber(fields["Van Cost"]);
@@ -321,6 +237,10 @@ app.post("/api/quote", async (req, res) => {
     const depositStandard = round2(totalStandard * DEPOSIT_RATE);
     const depositFull = round2(totalFull * DEPOSIT_RATE);
 
+    // Delete temporary pricing record
+    await deleteCalcRecord(tempRecordId);
+    tempRecordId = null;
+
     res.json({
       start,
       end,
@@ -332,11 +252,20 @@ app.post("/api/quote", async (req, res) => {
       totalStandard,
       totalFull,
       depositStandard,
-      depositFull,
-      calcRecordId: recordId
+      depositFull
     });
   } catch (err) {
     console.error(err);
+
+    // Best effort cleanup if temp record still exists
+    if (tempRecordId) {
+      try {
+        await deleteCalcRecord(tempRecordId);
+      } catch (cleanupErr) {
+        console.error("Failed to clean up temporary calc record:", cleanupErr);
+      }
+    }
+
     res.status(500).json({
       error: "Quote calculation failed",
       details: err.message
@@ -353,40 +282,25 @@ app.post("/api/request", async (req, res) => {
       pickup,
       dropoff,
       customerName,
-      customerEmail,
-      days,
-      vehiclePriceStandardIncluded,
-      longHireDiscount,
-      fullInsurance,
-      totalStandard,
-      totalFull,
-      depositStandard,
-      depositFull
+      customerEmail
     } = req.body || {};
 
-    if (!start || !end || !vanType || !pickup || !dropoff) {
+    if (!start || !end || !vanType || !pickup || !dropoff || !customerName || !customerEmail) {
       return res.status(400).json({
         error: "Missing required request fields",
-        details: "Please provide start, end, vanType, pickup and dropoff."
+        details: "Please provide start, end, vanType, pickup, dropoff, customerName and customerEmail."
       });
     }
 
-    const created = await createRequestRecord({
-      start,
-      end,
-      vanType,
-      pickup,
-      dropoff,
-      customerName,
-      customerEmail,
-      days,
-      vehiclePriceStandardIncluded,
-      longHireDiscount,
-      fullInsurance,
-      totalStandard,
-      totalFull,
-      depositStandard,
-      depositFull
+    const created = await createCalcRecord({
+      "Start": start,
+      "End": end,
+      "PickUp": pickup,
+      "DropOff": dropoff,
+      "Van Type": vanType,
+      "Name": customerName,
+      "Email": customerEmail,
+      "Run": true
     });
 
     res.json({
