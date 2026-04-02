@@ -12,15 +12,13 @@ app.use(express.static(__dirname));
 
 const AIRTABLE_TOKEN = process.env.AIRTABLE_TOKEN;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE; // bookings table from .env
+const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE; // Bookings table from .env
 const PORT = process.env.PORT || 3000;
 
-// Resend / email config
+// Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || "Bayinvent <quotes@mail.bayinvent.com>";
 const EMAIL_TO_INTERNAL = process.env.EMAIL_TO_INTERNAL || "info@bayinvent.com";
-
-const resend = new Resend(RESEND_API_KEY);
 
 // Pricing / quote config
 const CALC_TABLE = "tblOUD5hWhHfVJgRV";
@@ -31,15 +29,16 @@ const DEPOSIT_RATE = 0.15;
 
 if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID || !AIRTABLE_TABLE) {
   console.error("Missing required Airtable environment variables.");
-  console.error("Please set AIRTABLE_TOKEN, AIRTABLE_BASE_ID and AIRTABLE_TABLE in .env");
+  console.error("Please set AIRTABLE_TOKEN, AIRTABLE_BASE_ID and AIRTABLE_TABLE.");
   process.exit(1);
 }
 
 if (!RESEND_API_KEY) {
-  console.error("Missing required email environment variable.");
-  console.error("Please set RESEND_API_KEY in .env");
+  console.error("Missing RESEND_API_KEY.");
   process.exit(1);
 }
+
+const resend = new Resend(RESEND_API_KEY);
 
 function toCurrencyNumber(value) {
   const n = Number(value);
@@ -141,14 +140,11 @@ async function fetchAllAirtableRecords(tableIdOrName, mapper) {
       params.toString();
 
     const data = await airtableFetch(url);
-
     records = records.concat(data.records || []);
     offset = data.offset || null;
   } while (offset);
 
-  return records.map(function (record) {
-    return mapper(record.fields || {}, record.id);
-  });
+  return records.map((record) => mapper(record.fields || {}, record.id));
 }
 
 async function createCalcRecord(fields) {
@@ -183,7 +179,7 @@ async function waitForVanCost(recordId, maxAttempts = 12, delayMs = 1000) {
       return rec;
     }
 
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
   throw new Error("Pricing timeout: Airtable did not return Van Cost in time.");
@@ -272,105 +268,6 @@ async function sendInternalEmail(payload) {
   return result;
 }
 
-  return resend.emails.send({
-    from: EMAIL_FROM,
-    to: [payload.customerEmail],
-    subject,
-    html
-  });
-}
-
-async function sendCustomerEmail(payload) {
-  const subject = "Your Bayinvent Quote Request";
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; color: #1f2a1f; line-height: 1.5;">
-      <h2 style="margin-bottom: 12px;">Thank you for your request</h2>
-      <p>Hello ${payload.customerName},</p>
-      <p>Thanks for contacting Bayinvent. We have received your request and a personalized quote will follow shortly from <strong>The team @ Bayinvent</strong>.</p>
-
-      <h3 style="margin-top: 24px;">Your request details</h3>
-      <ul>
-        <li><strong>Van Type:</strong> ${payload.vanType}</li>
-        <li><strong>Travel Dates:</strong> ${formatDateDisplay(payload.start)} → ${formatDateDisplay(payload.end)}</li>
-        <li><strong>Pick up:</strong> ${payload.pickup}</li>
-        <li><strong>Drop off:</strong> ${payload.dropoff}</li>
-      </ul>
-
-      <p style="margin-top: 20px;">Kind regards,<br><strong>The team @ Bayinvent</strong></p>
-    </div>
-  `;
-
-  const result = await resend.emails.send({
-    from: EMAIL_FROM,
-    to: [payload.customerEmail],
-    subject,
-    html
-  });
-
-  console.log("Customer email result:", JSON.stringify(result));
-
-  if (result.error) {
-    throw new Error(`Customer email failed: ${JSON.stringify(result.error)}`);
-  }
-
-  return result;
-}
-
-async function sendInternalEmail(payload) {
-  const subject = "New Quote Request";
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; color: #1f2a1f; line-height: 1.5;">
-      <h2 style="margin-bottom: 12px;">New Quote Request</h2>
-
-      <ul>
-        <li><strong>Name:</strong> ${payload.customerName}</li>
-        <li><strong>Email:</strong> ${payload.customerEmail}</li>
-        <li><strong>Van Type:</strong> ${payload.vanType}</li>
-        <li><strong>Travel Dates:</strong> ${formatDateDisplay(payload.start)} → ${formatDateDisplay(payload.end)}</li>
-        <li><strong>Days:</strong> ${payload.days}</li>
-        <li><strong>Pick up:</strong> ${payload.pickup}</li>
-        <li><strong>Drop off:</strong> ${payload.dropoff}</li>
-      </ul>
-
-      <h3 style="margin-top: 24px;">Quote Snapshot</h3>
-      <ul>
-        <li><strong>Vehicle price incl. standard insurance:</strong> ${money(payload.vehiclePriceStandardIncluded)}</li>
-        <li><strong>Long hire discount:</strong> ${money(payload.longHireDiscount)}</li>
-        <li><strong>Full insurance option:</strong> ${money(payload.fullInsurance)}</li>
-        <li><strong>Total standard:</strong> ${money(payload.totalStandard)}</li>
-        <li><strong>Total full:</strong> ${money(payload.totalFull)}</li>
-        <li><strong>Deposit standard:</strong> ${money(payload.depositStandard)}</li>
-        <li><strong>Deposit full:</strong> ${money(payload.depositFull)}</li>
-      </ul>
-    </div>
-  `;
-
-  const result = await resend.emails.send({
-    from: EMAIL_FROM,
-    to: [EMAIL_TO_INTERNAL],
-    subject,
-    html
-  });
-
-  console.log("Internal email result:", JSON.stringify(result));
-
-  if (result.error) {
-    throw new Error(`Internal email failed: ${JSON.stringify(result.error)}`);
-  }
-
-  return result;
-}
-
-  return resend.emails.send({
-    from: EMAIL_FROM,
-    to: [EMAIL_TO_INTERNAL],
-    subject,
-    html
-  });
-}
-
 app.get("/healthz", (req, res) => {
   res.status(200).json({
     ok: true,
@@ -381,13 +278,9 @@ app.get("/healthz", (req, res) => {
 
 app.get("/api/bookings", async (req, res) => {
   try {
-    const bookings = await fetchAllAirtableRecords(
-      AIRTABLE_TABLE,
-      function (fields) {
-        return mapBookingRecord(fields);
-      }
+    const bookings = await fetchAllAirtableRecords(AIRTABLE_TABLE, (fields) =>
+      mapBookingRecord(fields)
     );
-
     res.json(bookings);
   } catch (err) {
     console.error(err);
@@ -428,7 +321,6 @@ app.post("/api/quote", async (req, res) => {
 
     const pricedRecord = await waitForVanCost(tempRecordId);
     const fields = pricedRecord.fields || {};
-
     const vanCost = toCurrencyNumber(fields["Van Cost"]);
     const vehiclePriceStandardIncluded = round2(vanCost);
 
@@ -438,10 +330,8 @@ app.post("/api/quote", async (req, res) => {
         : 0;
 
     const fullInsurance = round2(days * FULL_INSURANCE_PER_DAY);
-
     const totalStandard = round2(vehiclePriceStandardIncluded - longHireDiscount);
     const totalFull = round2(totalStandard + fullInsurance);
-
     const depositStandard = round2(totalStandard * DEPOSIT_RATE);
     const depositFull = round2(totalFull * DEPOSIT_RATE);
 
