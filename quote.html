@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Get Quote</title>
+  <title>Check Availability & Get Your Quote</title>
 
   <style>
     :root {
@@ -15,10 +15,11 @@
       --shadow: 0 2px 10px rgba(0,0,0,0.06);
       --radius: 12px;
       --green: #2e6b3b;
+      --green-dark: #245730;
       --blue: #1f3f8f;
-      --khaki: #a1915f;
       --accent: #d8e8d1;
       --highlight: #eef6e8;
+      --error: #a52714;
     }
 
     * {
@@ -34,26 +35,49 @@
     }
 
     .wrap {
-      max-width: 900px;
+      max-width: 920px;
       margin: 0 auto;
     }
 
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
     h2 {
-      margin: 0 0 14px 0;
       font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
     }
 
     .card {
       background: var(--bg-card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
     }
 
     .intro {
       color: var(--text-soft);
-      line-height: 1.45;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    .lead {
+      margin-top: 10px;
+      color: var(--text-soft);
+      line-height: 1.5;
+      font-size: 15px;
     }
 
     form {
@@ -87,7 +111,7 @@
       border-radius: 10px;
       padding: 10px 12px;
       background: white;
-      min-height: 42px;
+      min-height: 44px;
     }
 
     button {
@@ -95,25 +119,21 @@
       background: var(--green);
       color: white;
       border-radius: 10px;
-      padding: 11px 14px;
-      min-height: 42px;
+      padding: 11px 16px;
+      min-height: 44px;
       cursor: pointer;
       font-weight: 700;
+      transition: 0.18s ease;
     }
 
-    button:hover {
-      filter: brightness(0.97);
+    button:hover:not(:disabled) {
+      background: var(--green-dark);
+      border-color: var(--green-dark);
     }
 
     button:disabled {
-      opacity: 0.65;
-      cursor: wait;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
+      opacity: 0.55;
+      cursor: not-allowed;
     }
 
     .secondary {
@@ -122,28 +142,42 @@
       border: 1px solid var(--border);
     }
 
-    .status {
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      grid-column: 1 / -1;
+    }
+
+    .status,
+    .request-status {
       margin-top: 12px;
-      min-height: 20px;
+      min-height: 22px;
       font-size: 14px;
       color: var(--text-soft);
     }
 
-    .status.error {
-      color: #a52714;
+    .status.error,
+    .request-status.error {
+      color: var(--error);
       font-weight: 700;
     }
 
-    .status.success {
+    .status.success,
+    .request-status.success {
       color: var(--green);
       font-weight: 700;
     }
 
-    .results {
+    .results,
+    .cta-wrap,
+    .request-wrap {
       display: none;
     }
 
-    .results.show {
+    .results.show,
+    .cta-wrap.show,
+    .request-wrap.show {
       display: block;
     }
 
@@ -163,49 +197,6 @@
       border-radius: 999px;
       font-size: 13px;
       font-weight: 700;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .quote-box {
-      background: #fbfdfb;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .quote-box h3 {
-      margin: 0 0 10px 0;
-      font-size: 18px;
-    }
-
-    .quote-box.standard h3 {
-      color: var(--green);
-    }
-
-    .quote-box.full h3 {
-      color: var(--blue);
-    }
-
-    .line {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 8px 0;
-      border-bottom: 1px solid #e6eee4;
-      font-size: 14px;
-    }
-
-    .line:last-child {
-      border-bottom: none;
-    }
-
-    .line strong {
-      font-size: 15px;
     }
 
     .top-summary {
@@ -235,21 +226,56 @@
       font-weight: 700;
     }
 
-    .cta-wrap,
-    .request-wrap {
-      display: none;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
     }
 
-    .cta-wrap.show,
-    .request-wrap.show {
-      display: block;
+    .quote-box {
+      background: #fbfdfb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .quote-box.standard h3 {
+      color: var(--green);
+    }
+
+    .quote-box.full h3 {
+      color: var(--blue);
+    }
+
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 9px 0;
+      border-bottom: 1px solid #e6eee4;
+      font-size: 14px;
+    }
+
+    .line:last-child {
+      border-bottom: none;
+    }
+
+    .line strong {
+      font-size: 15px;
+    }
+
+    .helper {
+      margin-top: 14px;
+      color: var(--text-soft);
+      line-height: 1.5;
+      font-size: 14px;
     }
 
     .cta-wrap {
-      margin-top: 18px;
+      margin-top: 20px;
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateY(10px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
     }
 
     .cta-wrap.show {
@@ -261,13 +287,13 @@
       background: var(--highlight);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 18px;
+      padding: 20px;
       text-align: center;
     }
 
     .cta-text {
-      margin-top: 12px;
-      font-size: 16px;
+      margin-top: 14px;
+      font-size: 18px;
       line-height: 1.5;
       font-weight: 700;
       color: #2b4a2f;
@@ -275,6 +301,17 @@
 
     .request-wrap {
       margin-top: 18px;
+    }
+
+    .request-summary {
+      margin-bottom: 14px;
+      padding: 14px;
+      background: #fbfdfb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-soft);
+      line-height: 1.5;
+      font-size: 14px;
     }
 
     .request-form {
@@ -288,62 +325,38 @@
       grid-column: 1 / -1;
     }
 
-    .request-summary {
-      margin-bottom: 14px;
-      padding: 12px;
-      background: #fbfdfb;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--text-soft);
-      line-height: 1.45;
-      font-size: 14px;
-    }
-
-    .request-status {
-      margin-top: 12px;
-      min-height: 20px;
-      font-size: 14px;
-      color: var(--text-soft);
-    }
-
-    .request-status.error {
-      color: #a52714;
-      font-weight: 700;
-    }
-
-    .request-status.success {
-      color: var(--green);
-      font-weight: 700;
-    }
-
-    @media (max-width: 800px) {
-      form,
-      .grid,
-      .top-summary,
-      .request-form {
-        grid-template-columns: 1fr;
-      }
-
+    @media (max-width: 860px) {
       body {
         padding: 12px;
       }
 
-      .card {
-        padding: 14px;
+      h1 {
+        font-size: 26px;
       }
 
-      h2 {
-        font-size: 21px;
+      .top-summary,
+      .grid,
+      form,
+      .request-form {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 16px;
       }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
+
     <div class="card">
-      <h2>Get Quote</h2>
+      <h1>Check Availability &amp; Get Your Quote</h1>
       <div class="intro">
-        Select your travel dates and vehicle to receive a tailored quote.
+        We tailor each booking to fit our schedule — submit your details to receive the best possible option.
+      </div>
+      <div class="lead">
+        Select your travel dates and preferred vehicle. We’ll check availability and optimise your booking within our schedule.
       </div>
     </div>
 
@@ -369,8 +382,8 @@
           <input id="end" name="end" type="date" required />
         </div>
 
-        <div class="actions" style="grid-column: 1 / -1;">
-          <button id="quoteBtn" type="submit">Request personalised quote</button>
+        <div class="actions">
+          <button id="quoteBtn" type="submit" disabled>Get instant quote</button>
           <button id="clearBtn" type="button" class="secondary">Clear</button>
         </div>
       </form>
@@ -380,21 +393,21 @@
 
     <div id="results" class="card results">
       <div class="results-header">
-        <h2 style="margin:0; font-size:22px;">Quote Result</h2>
+        <h2>Your estimated rental</h2>
         <div id="quoteBadge" class="badge"></div>
       </div>
 
       <div class="top-summary">
         <div class="mini">
-          <div class="label">Van Type</div>
+          <div class="label">Vehicle</div>
           <div id="sumVanType" class="value"></div>
         </div>
         <div class="mini">
-          <div class="label">Travel Dates</div>
+          <div class="label">Dates</div>
           <div id="sumDates" class="value" style="font-size:16px;"></div>
         </div>
         <div class="mini">
-          <div class="label">Charged Days</div>
+          <div class="label">Duration</div>
           <div id="sumDays" class="value"></div>
         </div>
       </div>
@@ -414,7 +427,7 @@
           </div>
 
           <div class="line">
-            <strong>Total</strong>
+            <strong>Total (standard)</strong>
             <strong id="standardTotal"></strong>
           </div>
 
@@ -438,12 +451,12 @@
           </div>
 
           <div class="line">
-            <span>Full insurance option</span>
+            <span>Optional full insurance</span>
             <span id="fullInsurance"></span>
           </div>
 
           <div class="line">
-            <strong>Total</strong>
+            <strong>Total (full cover)</strong>
             <strong id="fullTotal"></strong>
           </div>
 
@@ -454,18 +467,22 @@
         </div>
       </div>
 
+      <div class="helper">
+        This is an estimated quote. Final confirmation depends on operational fit and availability.
+      </div>
+
       <div id="ctaWrap" class="cta-wrap">
         <div class="cta-card">
-          <button id="customQuoteBtn" type="button">Custom Quote</button>
+          <button id="customQuoteBtn" type="button">Request Personalised Quote</button>
           <div class="cta-text">
-            We often apply additional discounts if your booking fits well in our availability.
+            We often apply additional discounts if your booking fits well within our availability.
           </div>
         </div>
       </div>
 
       <div id="requestWrap" class="request-wrap">
         <div class="card" style="margin-top:16px; margin-bottom:0; box-shadow:none; border:1px solid var(--border);">
-          <h2 style="font-size:22px; margin-bottom:12px;">Contact Us</h2>
+          <h2 style="margin-bottom:12px;">Request Personalised Quote</h2>
 
           <div id="requestSummary" class="request-summary"></div>
 
@@ -505,7 +522,7 @@
             </div>
 
             <div class="actions full-width">
-              <button id="sendBtn" type="submit">Send</button>
+              <button id="sendBtn" type="submit">Request Personalised Quote</button>
             </div>
           </form>
 
@@ -520,17 +537,23 @@
     const REQUEST_API_URL = "/api/request";
 
     const form = document.getElementById("quoteForm");
+    const requestForm = document.getElementById("requestForm");
+
+    const vanTypeInput = document.getElementById("vanType");
+    const startInput = document.getElementById("start");
+    const endInput = document.getElementById("end");
+
     const quoteBtn = document.getElementById("quoteBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const sendBtn = document.getElementById("sendBtn");
+
     const results = document.getElementById("results");
     const status = document.getElementById("status");
+    const requestStatus = document.getElementById("requestStatus");
     const ctaWrap = document.getElementById("ctaWrap");
     const customQuoteBtn = document.getElementById("customQuoteBtn");
     const requestWrap = document.getElementById("requestWrap");
-    const requestForm = document.getElementById("requestForm");
-    const requestStatus = document.getElementById("requestStatus");
     const requestSummary = document.getElementById("requestSummary");
-    const sendBtn = document.getElementById("sendBtn");
 
     let ctaTimer = null;
     let currentQuote = null;
@@ -546,7 +569,7 @@
       if (!isoDate) return "";
       const parts = String(isoDate).split("-");
       if (parts.length !== 3) return isoDate;
-      return parts[2] + "/" + parts[1] + "/" + parts[0];
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
     function setStatus(message, kind) {
@@ -559,6 +582,20 @@
       requestStatus.className = "request-status" + (kind ? " " + kind : "");
     }
 
+    function isValidQuoteInput() {
+      const vanType = vanTypeInput.value.trim();
+      const start = startInput.value;
+      const end = endInput.value;
+
+      if (!vanType || !start || !end) return false;
+      if (end < start) return false;
+      return true;
+    }
+
+    function refreshQuoteButtonState() {
+      quoteBtn.disabled = !isValidQuoteInput();
+    }
+
     function hideFollowup() {
       if (ctaTimer) {
         clearTimeout(ctaTimer);
@@ -566,18 +603,18 @@
       }
       ctaWrap.classList.remove("show");
       requestWrap.classList.remove("show");
-      setRequestStatus("", "");
       requestForm.reset();
+      setRequestStatus("", "");
     }
 
     function fillResult(data) {
       document.getElementById("quoteBadge").textContent =
-        data.days >= 25 ? "Long hire discount applied" : "Standard rate";
+        data.days >= 25 ? "Long hire discount applied" : "Estimated quote";
 
       document.getElementById("sumVanType").textContent = data.vanType;
       document.getElementById("sumDates").textContent =
-        formatDateDisplay(data.start) + " → " + formatDateDisplay(data.end);
-      document.getElementById("sumDays").textContent = data.days;
+        `${formatDateDisplay(data.start)} – ${formatDateDisplay(data.end)}`;
+      document.getElementById("sumDays").textContent = `${data.days} days`;
 
       document.getElementById("standardVehicle").textContent = money(data.vehiclePriceStandardIncluded);
       document.getElementById("standardDiscount").textContent = "-" + money(data.longHireDiscount);
@@ -593,50 +630,39 @@
       results.classList.add("show");
 
       hideFollowup();
-      ctaTimer = setTimeout(function () {
+      ctaTimer = setTimeout(() => {
         ctaWrap.classList.add("show");
       }, 5000);
     }
 
     function fillRequestSummary(data) {
-      requestSummary.innerHTML =
-        "<strong>Selected trip:</strong> " +
-        data.vanType +
-        " | " +
-        formatDateDisplay(data.start) +
-        " → " +
-        formatDateDisplay(data.end) +
-        " | " +
-        data.days +
-        " days" +
-        "<br><strong>Quote totals:</strong> Standard " +
-        money(data.totalStandard) +
-        " / Full " +
-        money(data.totalFull);
+      requestSummary.innerHTML = `
+        <strong>Your selection:</strong><br>
+        Van: ${data.vanType}<br>
+        Dates: ${formatDateDisplay(data.start)} – ${formatDateDisplay(data.end)}<br>
+        Estimated total (standard): ${money(data.totalStandard)}<br>
+        Estimated total (full cover): ${money(data.totalFull)}
+      `;
     }
 
-    form.addEventListener("submit", async function (event) {
+    async function handleQuoteSubmit(event) {
       event.preventDefault();
 
-      const vanType = document.getElementById("vanType").value;
-      const start = document.getElementById("start").value;
-      const end = document.getElementById("end").value;
-
-      if (!vanType || !start || !end) {
-        setStatus("Please complete all fields.", "error");
+      if (!isValidQuoteInput()) {
+        setStatus("Please complete all fields with valid dates.", "error");
         return;
       }
 
-      if (end < start) {
-        setStatus("End date must be on or after start date.", "error");
-        return;
-      }
+      const vanType = vanTypeInput.value;
+      const start = startInput.value;
+      const end = endInput.value;
+
+      currentQuote = null;
+      hideFollowup();
+      results.classList.remove("show");
 
       quoteBtn.disabled = true;
-      results.classList.remove("show");
-      hideFollowup();
-      currentQuote = null;
-      setStatus("Calculating quote…", "");
+      setStatus("Checking availability...", "");
 
       try {
         const response = await fetch(QUOTE_API_URL, {
@@ -644,11 +670,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            vanType,
-            start,
-            end
-          })
+          body: JSON.stringify({ vanType, start, end })
         });
 
         const data = await response.json();
@@ -659,23 +681,16 @@
 
         currentQuote = data;
         fillResult(data);
-        setStatus("Quote ready.", "success");
+        setStatus("Your estimated price is ready.", "success");
       } catch (error) {
         console.error(error);
-        setStatus(error.message || "Something went wrong while calculating the quote.", "error");
+        setStatus(error.message || "Something went wrong while checking availability.", "error");
       } finally {
-        quoteBtn.disabled = false;
+        refreshQuoteButtonState();
       }
-    });
+    }
 
-    customQuoteBtn.addEventListener("click", function () {
-      if (!currentQuote) return;
-      fillRequestSummary(currentQuote);
-      requestWrap.classList.add("show");
-      requestWrap.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    requestForm.addEventListener("submit", async function (event) {
+    async function handleRequestSubmit(event) {
       event.preventDefault();
 
       if (!currentQuote) {
@@ -707,7 +722,7 @@
       }
 
       sendBtn.disabled = true;
-      setRequestStatus("Sending request…", "");
+      setRequestStatus("Sending request...", "");
 
       try {
         const response = await fetch(REQUEST_API_URL, {
@@ -718,28 +733,60 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type") || "";
+        let data = {};
+
+        if (contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(text || "Unexpected server response.");
+        }
 
         if (!response.ok) {
           throw new Error(data.details || data.error || "Request could not be sent.");
         }
 
-        setRequestStatus("Your request has been sent successfully.", "success");
+        setRequestStatus(
+          "Your request has been received. We’ll review your dates against our availability and get back to you with the best possible option shortly.",
+          "success"
+        );
       } catch (error) {
         console.error(error);
         setRequestStatus(error.message || "Something went wrong while sending your request.", "error");
       } finally {
         sendBtn.disabled = false;
       }
-    });
+    }
 
-    clearBtn.addEventListener("click", function () {
+    function handleCustomQuoteClick() {
+      if (!currentQuote) return;
+      fillRequestSummary(currentQuote);
+      requestWrap.classList.add("show");
+      requestWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function handleClear() {
       form.reset();
+      requestForm.reset();
+      currentQuote = null;
       results.classList.remove("show");
       hideFollowup();
-      currentQuote = null;
       setStatus("", "");
-    });
+      setRequestStatus("", "");
+      refreshQuoteButtonState();
+    }
+
+    form.addEventListener("submit", handleQuoteSubmit);
+    requestForm.addEventListener("submit", handleRequestSubmit);
+    customQuoteBtn.addEventListener("click", handleCustomQuoteClick);
+    clearBtn.addEventListener("click", handleClear);
+
+    vanTypeInput.addEventListener("change", refreshQuoteButtonState);
+    startInput.addEventListener("input", refreshQuoteButtonState);
+    endInput.addEventListener("input", refreshQuoteButtonState);
+
+    refreshQuoteButtonState();
   </script>
 </body>
 </html>
