@@ -192,23 +192,33 @@
       .fc-event-title {
         font-size: 11px;
       }/* nicer visible scrollbar */
-#calendar::-webkit-scrollbar {
-  height: 14px;
-  width: 14px;
+/* darker, larger, always visible-feeling scrollbar */
+#calendar::-webkit-scrollbar,
+#calendar .fc-scroller::-webkit-scrollbar,
+#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar {
+  height: 18px;
+  width: 18px;
 }
 
-#calendar::-webkit-scrollbar-track {
-  background: #d8e3d4;
+#calendar::-webkit-scrollbar-track,
+#calendar .fc-scroller::-webkit-scrollbar-track,
+#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-track {
+  background: #c9d6c4;
   border-radius: 10px;
 }
 
-#calendar::-webkit-scrollbar-thumb {
-  background: #5d7f5b;
+#calendar::-webkit-scrollbar-thumb,
+#calendar .fc-scroller::-webkit-scrollbar-thumb,
+#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb {
+  background: #4f6f4d;
   border-radius: 10px;
+  border: 2px solid #c9d6c4;
 }
 
-#calendar::-webkit-scrollbar-thumb:hover {
-  background: #3f5f3d;
+#calendar::-webkit-scrollbar-thumb:hover,
+#calendar .fc-scroller::-webkit-scrollbar-thumb:hover,
+#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb:hover {
+  background: #3b5839;
 }
     }
   </style>
@@ -371,10 +381,8 @@
   var tablet = window.innerWidth <= 900;
 
   return {
-    height: mobile ? 420 : 460,
+    height: mobile ? 320 : 360,
     resourceAreaWidth: mobile ? 170 : (tablet ? 210 : 260),
-
-    // force horizontal overflow again
     slotMinWidth: mobile ? 90 : (tablet ? 80 : 70)
   };
 }
