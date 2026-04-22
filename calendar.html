@@ -1,4 +1,4 @@
-<!doctype html>
+<<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -16,7 +16,6 @@
       --bg-datagrid: #eef5ea;
       --border: #cfddcc;
       --text: #1f2a1f;
-      --text-soft: #556255;
       --shadow: 0 2px 10px rgba(0,0,0,0.06);
       --radius: 10px;
     }
@@ -34,48 +33,8 @@
     }
 
     h2 {
-      margin: 0 0 12px 0;
-      font-size: 22px;
-    }
-
-    .controls {
       margin: 0 0 16px 0;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-      background: var(--bg-card);
-      padding: 12px 14px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-
-    .controls label {
-      font-weight: 600;
-    }
-
-    .controls input[type="date"] {
-      font-size: 14px;
-      padding: 6px 8px;
-    }
-
-    .controls button {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      background: #f7faf7;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      min-height: 38px;
-    }
-
-    .controls button:hover {
-      background: #eef5ed;
-    }
-
-    .hint {
-      color: var(--text-soft);
-      font-size: 13px;
+      font-size: 22px;
     }
 
     #calendar {
@@ -155,10 +114,6 @@
       padding-right: 14px;
     }
 
-    .fc-event-title-container {
-      padding-left: 0;
-    }
-
     .fc-event-title {
       font-weight: 700;
       text-shadow: 0 1px 0 rgba(0,0,0,0.12);
@@ -212,16 +167,6 @@
         font-size: 20px;
       }
 
-      .controls {
-        gap: 10px;
-        padding: 10px 12px;
-      }
-
-      .controls button {
-        font-size: 13px;
-        padding: 8px 10px;
-      }
-
       #calendar {
         padding: 8px;
       }
@@ -234,25 +179,6 @@
     @media (max-width: 640px) {
       body {
         padding: 10px;
-      }
-
-      .controls {
-        align-items: stretch;
-      }
-
-      .controls label,
-      .controls input,
-      .controls button,
-      .controls .hint {
-        width: 100%;
-      }
-
-      .controls button {
-        width: 100%;
-      }
-
-      .hint {
-        font-size: 12px;
       }
 
       .fc .fc-toolbar-title {
@@ -272,31 +198,19 @@
 
 <body>
 
-<h2>Fleet Calendar Test</h2>
-
-<div class="controls">
-  <label for="availabilityDate">Availability date:</label>
-  <input type="date" id="availabilityDate">
-
-  <button id="applyFilterBtn" type="button">Show available vans</button>
-  <button id="clearFilterBtn" type="button">Clear filter</button>
-
-  <span class="hint">Live JSON feed from Airtable bridge.</span>
-</div>
+<h2>Fleet Calendar</h2>
 
 <div id="calendar"></div>
 <div id="tooltip" class="tooltip"></div>
 
 <script>
   var tooltip = document.getElementById('tooltip');
-  var availabilityDateInput = document.getElementById('availabilityDate');
 
   var calendar = null;
   var allRows = [];
   var allResources = [];
   var allEvents = [];
 
-  // WICHTIG: relative path für lokal + Render
   var BOOKINGS_JSON_URL = '/api/bookings';
 
   function addOneDayIso(dateStr) {
@@ -434,32 +348,6 @@
     return season.start;
   }
 
-  function isEventCoveringDate(event, isoDate) {
-    return event.start <= isoDate && event.end > isoDate;
-  }
-
-  function getAvailabilityState(resources, events, isoDate) {
-    var available = [];
-    var unavailable = [];
-
-    resources.forEach(function(resource) {
-      var busy = events.some(function(event) {
-        return event.resourceId === resource.id && isEventCoveringDate(event, isoDate);
-      });
-
-      if (!busy) {
-        available.push(resource.id);
-      } else {
-        unavailable.push(resource.id);
-      }
-    });
-
-    return {
-      available: available.sort(),
-      unavailable: unavailable.sort()
-    };
-  }
-
   function getResponsiveOptions() {
     var mobile = window.innerWidth <= 640;
     var tablet = window.innerWidth <= 900;
@@ -471,36 +359,15 @@
     };
   }
 
-  function renderCalendar(resources, events, selectedDate, availableOnly) {
-    var displayResources = resources;
-    var displayEvents = events;
+  function renderCalendar(resources, events) {
     var seasonRange = getSeasonRangeForCurrentYear();
-
-    if (selectedDate) {
-      var availability = getAvailabilityState(resources, events, selectedDate);
-
-      if (availableOnly) {
-        var allowedIds = {};
-        availability.available.forEach(function(id) {
-          allowedIds[id] = true;
-        });
-
-        displayResources = resources.filter(function(r) {
-          return allowedIds[r.id];
-        });
-
-        displayEvents = events.filter(function(e) {
-          return allowedIds[e.resourceId];
-        });
-      }
-    }
 
     if (calendar) {
       calendar.destroy();
     }
 
     var responsive = getResponsiveOptions();
-    var initialDate = selectedDate || getInitialDate();
+    var initialDate = getInitialDate();
 
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
       schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
@@ -524,8 +391,8 @@
       resourceAreaHeaderContent: 'Van',
       resourceAreaWidth: responsive.resourceAreaWidth,
       slotMinWidth: responsive.slotMinWidth,
-      resources: displayResources,
-      events: displayEvents,
+      resources: resources,
+      events: events,
 
       resourceLabelContent: function(arg) {
         var color = (arg.resource.extendedProps && arg.resource.extendedProps.color) || '#5c6bc0';
@@ -589,16 +456,12 @@
 
   async function loadBookingData() {
     try {
-      console.log('Fetching booking data from:', BOOKINGS_JSON_URL);
-
       var response = await fetch(BOOKINGS_JSON_URL, { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('HTTP ' + response.status);
       }
 
       var data = await response.json();
-
-      console.log('Rows loaded:', data);
 
       if (!Array.isArray(data)) {
         throw new Error('JSON must be an array of booking rows.');
@@ -608,50 +471,21 @@
       allResources = buildResources(allRows);
       allEvents = buildEvents(allRows);
 
-      console.log('Resources:', allResources);
-      console.log('Events:', allEvents);
-
       if (!allResources.length || !allEvents.length) {
         console.error('No usable booking records found in JSON.');
         return;
       }
 
-      renderCalendar(allResources, allEvents, availabilityDateInput.value || '', false);
+      renderCalendar(allResources, allEvents);
 
     } catch (err) {
       console.error('Failed to load JSON data:', err);
     }
   }
 
-  document.getElementById('applyFilterBtn').addEventListener('click', function() {
-    if (!allResources.length) {
-      alert('No booking data loaded yet.');
-      return;
-    }
-
-    if (!availabilityDateInput.value) {
-      alert('Pick a date first.');
-      return;
-    }
-
-    renderCalendar(allResources, allEvents, availabilityDateInput.value, true);
-  });
-
-  document.getElementById('clearFilterBtn').addEventListener('click', function() {
-    if (!allResources.length) return;
-
-    availabilityDateInput.value = '';
-    renderCalendar(allResources, allEvents, '', false);
-  });
-
   window.addEventListener('resize', function() {
     if (!allResources.length || !allEvents.length) return;
-    renderCalendar(
-      allResources,
-      allEvents,
-      availabilityDateInput.value || '',
-      false
-    );
+    renderCalendar(allResources, allEvents);
   });
 
   loadBookingData();
