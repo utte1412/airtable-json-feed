@@ -191,7 +191,25 @@
 
       .fc-event-title {
         font-size: 11px;
-      }
+      }/* nicer visible scrollbar */
+#calendar::-webkit-scrollbar {
+  height: 14px;
+  width: 14px;
+}
+
+#calendar::-webkit-scrollbar-track {
+  background: #d8e3d4;
+  border-radius: 10px;
+}
+
+#calendar::-webkit-scrollbar-thumb {
+  background: #5d7f5b;
+  border-radius: 10px;
+}
+
+#calendar::-webkit-scrollbar-thumb:hover {
+  background: #3f5f3d;
+}
     }
   </style>
 </head>
@@ -353,7 +371,7 @@
   var tablet = window.innerWidth <= 900;
 
   return {
-    height: mobile ? 520 : 650,
+    height: mobile ? 420 : 460,
     resourceAreaWidth: mobile ? 170 : (tablet ? 210 : 260),
 
     // force horizontal overflow again
