@@ -349,15 +349,17 @@
   }
 
   function getResponsiveOptions() {
-    var mobile = window.innerWidth <= 640;
-    var tablet = window.innerWidth <= 900;
+  var mobile = window.innerWidth <= 640;
+  var tablet = window.innerWidth <= 900;
 
-    return {
-      height: mobile ? 520 : 650,
-      resourceAreaWidth: mobile ? 170 : (tablet ? 200 : 240),
-      slotMinWidth: mobile ? 52 : 42
-    };
-  }
+  return {
+    height: mobile ? 520 : 650,
+    resourceAreaWidth: mobile ? 170 : (tablet ? 210 : 260),
+
+    // force horizontal overflow again
+    slotMinWidth: mobile ? 90 : (tablet ? 80 : 70)
+  };
+}
 
   function renderCalendar(resources, events) {
     var seasonRange = getSeasonRangeForCurrentYear();
