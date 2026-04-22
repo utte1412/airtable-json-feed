@@ -1,4 +1,4 @@
-<<!doctype html>
+<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -42,7 +42,14 @@
       padding: 12px;
       border-radius: var(--radius);
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      overflow: auto;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    /* remove unnecessary vertical scrollbars */
+    #calendar .fc-scroller,
+    #calendar .fc-scroller-liquid-absolute {
+      overflow-y: hidden !important;
     }
 
     .fc .fc-toolbar-title {
@@ -158,6 +165,35 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
+    /* darker, larger scrollbar */
+    #calendar::-webkit-scrollbar,
+    #calendar .fc-scroller::-webkit-scrollbar,
+    #calendar .fc-scroller-liquid-absolute::-webkit-scrollbar {
+      height: 18px;
+      width: 18px;
+    }
+
+    #calendar::-webkit-scrollbar-track,
+    #calendar .fc-scroller::-webkit-scrollbar-track,
+    #calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-track {
+      background: #c9d6c4;
+      border-radius: 10px;
+    }
+
+    #calendar::-webkit-scrollbar-thumb,
+    #calendar .fc-scroller::-webkit-scrollbar-thumb,
+    #calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb {
+      background: #4f6f4d;
+      border-radius: 10px;
+      border: 2px solid #c9d6c4;
+    }
+
+    #calendar::-webkit-scrollbar-thumb:hover,
+    #calendar .fc-scroller::-webkit-scrollbar-thumb:hover,
+    #calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb:hover {
+      background: #3b5839;
+    }
+
     @media (max-width: 900px) {
       body {
         padding: 12px;
@@ -191,35 +227,7 @@
 
       .fc-event-title {
         font-size: 11px;
-      }/* nicer visible scrollbar */
-/* darker, larger, always visible-feeling scrollbar */
-#calendar::-webkit-scrollbar,
-#calendar .fc-scroller::-webkit-scrollbar,
-#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar {
-  height: 18px;
-  width: 18px;
-}
-
-#calendar::-webkit-scrollbar-track,
-#calendar .fc-scroller::-webkit-scrollbar-track,
-#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-track {
-  background: #c9d6c4;
-  border-radius: 10px;
-}
-
-#calendar::-webkit-scrollbar-thumb,
-#calendar .fc-scroller::-webkit-scrollbar-thumb,
-#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb {
-  background: #4f6f4d;
-  border-radius: 10px;
-  border: 2px solid #c9d6c4;
-}
-
-#calendar::-webkit-scrollbar-thumb:hover,
-#calendar .fc-scroller::-webkit-scrollbar-thumb:hover,
-#calendar .fc-scroller-liquid-absolute::-webkit-scrollbar-thumb:hover {
-  background: #3b5839;
-}
+      }
     }
   </style>
 </head>
@@ -377,15 +385,15 @@
   }
 
   function getResponsiveOptions() {
-  var mobile = window.innerWidth <= 640;
-  var tablet = window.innerWidth <= 900;
+    var mobile = window.innerWidth <= 640;
+    var tablet = window.innerWidth <= 900;
 
-  return {
-    height: mobile ? 320 : 360,
-    resourceAreaWidth: mobile ? 170 : (tablet ? 210 : 260),
-    slotMinWidth: mobile ? 90 : (tablet ? 80 : 70)
-  };
-}
+    return {
+      height: mobile ? 320 : 360,
+      resourceAreaWidth: mobile ? 170 : (tablet ? 210 : 260),
+      slotMinWidth: mobile ? 90 : (tablet ? 80 : 70)
+    };
+  }
 
   function renderCalendar(resources, events) {
     var seasonRange = getSeasonRangeForCurrentYear();
